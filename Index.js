@@ -1,5 +1,5 @@
 import express from "express";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -7,19 +7,15 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 app.post("/ask", async (req, res) => {
   try {
     const { message } = req.body;
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: message }],
-    });
-    res.json({ reply: response.content[0].text });
+    const result = await model.generateContent(message);
+    const reply = result.response.text();
+    res.json({ reply });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
